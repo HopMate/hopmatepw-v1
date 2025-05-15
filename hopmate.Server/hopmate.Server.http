@@ -1,0 +1,6 @@
+@hopmate.Server_HostAddress = http://localhost:5216
+
+GET {{hopmate.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
