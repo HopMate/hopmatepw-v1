@@ -1,6 +1,6 @@
 /**
  * @file authService.ts
- * @description This file defines the authService, which provides methods for user authentication, including registration, login, and token refresh.
+ * @description Fixed authentication service
  */
 
 import type { LoginRequest, RegisterRequest, RefreshTokenRequest, AuthResponse } from '@/types/auth';
@@ -45,7 +45,6 @@ export const authService = {
     },
 
     forgotPassword: async (email: string): Promise<AuthResponse> => {
-        // Note: This endpoint isn't in your controller yet, but adding it for completeness
         const response = await fetch(`${API_URL}/forgot-password`, {
             method: 'POST',
             headers: {
@@ -58,7 +57,6 @@ export const authService = {
     },
 
     resetPassword: async (username: string, newPassword: string): Promise<AuthResponse> => {
-        // Note: This endpoint isn't in your controller yet, but adding it for completeness
         const response = await fetch(`${API_URL}/reset-password`, {
             method: 'POST',
             headers: {
@@ -72,5 +70,13 @@ export const authService = {
 
     getToken: (): string | null => {
         return localStorage.getItem('token');
+    },
+
+    setToken: (token: string): void => {
+        localStorage.setItem('token', token);
+    },
+
+    removeToken: (): void => {
+        localStorage.removeItem('token');
     }
 };

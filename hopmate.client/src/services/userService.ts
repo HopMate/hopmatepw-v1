@@ -1,6 +1,6 @@
 /**
  * @file userService.ts
- * @description This file defines the userService, which provides methods for user-related operations such as fetching user data and updating the user profile.
+ * @description Fixed user service
  */
 
 import { authService } from './authService';
@@ -26,11 +26,16 @@ export const userService = {
             }
 
             const userData = await response.json();
-            if (!userData.id) {
-                throw new Error('Invalid user data received');
-            }
 
-            return userData;
+            // Create a formatted user object from the API response
+            const user: User = {
+                id: userData.id || '',  // The API may not return ID directly
+                fullName: userData.fullName,
+                email: userData.email,
+                dateOfBirth: userData.dateOfBirth
+            };
+
+            return user;
         } catch (error) {
             console.error('Error in userService.getCurrentUser:', error);
             throw error;

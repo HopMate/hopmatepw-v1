@@ -1,6 +1,6 @@
 ﻿/**
  * @file SignUp.tsx
- * @description This file defines the SignUp component, which provides a registration form for new users to create an account.
+ * @description This file defines the SignUp component with type-safe form handling.
  */
 
 import { useState } from 'react';
@@ -11,17 +11,25 @@ import { Button } from '@/components/ui/Button';
 import { TextLink } from '@/components/ui/TextLink';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/hooks/useAuth';
+import type { RegisterRequest } from '@/types/auth';
 
 export const SignUp = () => {
-    const [fullName, setFullName] = useState('');
-    const [dateOfBirth, setDateOfBirth] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState<RegisterRequest>({
+        fullName: '',
+        email: '',
+        password: '',
+        dateOfBirth: ''
+    });
+
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
     const { login } = useAuth();
+
+    const handleChange = (key: keyof RegisterRequest) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, [key]: e.target.value }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,12 +37,7 @@ export const SignUp = () => {
         setIsLoading(true);
 
         try {
-            const response = await authService.register({
-                fullName,
-                email,
-                password,
-                dateOfBirth
-            });
+            const response = await authService.register(formData);
 
             if (response.success) {
                 login(response);
@@ -43,7 +46,7 @@ export const SignUp = () => {
                 setError(response.message || 'Registration failed');
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
             setError('An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
@@ -66,33 +69,37 @@ export const SignUp = () => {
                     )}
 
                     <Input
+                        name="fullName"
                         label="Full Name"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        value={formData.fullName}
+                        onChange={handleChange('fullName')}
                         required
                     />
 
                     <Input
+                        name="dateOfBirth"
                         label="Date of Birth"
                         type="date"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        value={formData.dateOfBirth}
+                        onChange={handleChange('dateOfBirth')}
                         required
                     />
 
                     <Input
+                        name="email"
                         label="Email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleChange('email')}
                         required
                     />
 
                     <Input
+                        name="password"
                         label="Password"
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={handleChange('password')}
                         showPassword
                         required
                     />

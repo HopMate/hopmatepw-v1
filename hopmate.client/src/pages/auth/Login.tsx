@@ -1,25 +1,34 @@
 ﻿/**
  * @file Login.tsx
- * @description This file defines the Login component, which provides a login form for users to authenticate themselves.
- */
+ * @description Example login component with proper error handling and type-safe form updates
+ */ 
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { authService } from '@/services/authService';
+import type { LoginRequest } from '@/types/auth';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { TextLink } from '@/components/ui/TextLink';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { TextLink } from '@/components/ui/TextLink';
-import { authService } from '@/services/authService';
-import { useAuth } from '@/hooks/useAuth';
 
 export const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const [formData, setFormData] = useState<LoginRequest>({
+        email: '',
+        password: ''
+    });
+
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const navigate = useNavigate();
-    const { login } = useAuth();
+    // Type-safe handler using keyof LoginRequest
+    const handleChange = (key: keyof LoginRequest) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, [key]: e.target.value }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,20 +36,17 @@ export const Login = () => {
         setIsLoading(true);
 
         try {
-            const response = await authService.login({
-                email,
-                password
-            });
+            const response = await authService.login(formData);
 
             if (response.success) {
-                login(response);
-                navigate('/home'); // Redirect to dashboard after successful login
+                await login(response);
+                navigate('/home');
             } else {
                 setError(response.message || 'Login failed');
             }
         } catch (err) {
-            console.log(err);
-            setError('An error occurred. Please try again.');
+            setError('An error occurred during login. Please try again.');
+            console.error('Login error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -56,24 +62,26 @@ export const Login = () => {
                     </p>
 
                     {error && (
-                        <div className="mb-4 rounded bg-red-50 p-3 text-red-600">
+                        <div className="mb-4 rounded-md bg-red-50 p-3 text-red-700">
                             {error}
                         </div>
                     )}
 
                     <Input
+                        name="email"
                         label="Email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleChange('email')}
                         required
                     />
 
                     <Input
+                        name="password"
                         label="Password"
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={handleChange('password')}
                         showPassword
                         required
                     />

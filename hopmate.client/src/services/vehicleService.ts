@@ -1,64 +1,59 @@
-// services/vehicleService.ts
-import axios from 'axios';
-import type { Vehicle, VehicleFormData } from '@/types/vehicle';
+import { authService } from './authService';
+import type { Vehicle } from '@/types/vehicle';
 
-const API_URL = '/api/vehicles';
+const API_URL = 'https://localhost:7293/api/vehicles';
 
-export const getAllVehicles = async (): Promise<Vehicle[]> => {
-    const response = await axios.get(API_URL);
-    return response.data;
-};
+const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authService.getToken()}`
+});
 
-export const getVehicleById = async (id: string): Promise<Vehicle> => {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-};
+export const vehicleService = {
+    getAll: async (): Promise<Vehicle[]> => {
+        const res = await fetch(API_URL, { headers: getHeaders() });
+        return res.json();
+    },
 
-export const getVehiclesByDriver = async (driverId: string): Promise<Vehicle[]> => {
-    const response = await axios.get(`${API_URL}/driver/${driverId}`);
-    return response.data;
-};
+    create: async (data: any) => {
+        const response = await fetch('/api/vehicles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
 
-export const createVehicle = async (vehicleData: VehicleFormData): Promise<Vehicle> => {
-    const formData = new FormData();
-    formData.append('brand', vehicleData.brand);
-    formData.append('model', vehicleData.model);
-    formData.append('plate', vehicleData.plate);
-    formData.append('seats', vehicleData.seats.toString());
-    formData.append('colorId', vehicleData.colorId.toString());
-    formData.append('driverId', vehicleData.driverId);
-    if (vehicleData.imageFile) {
-        formData.append('imageFile', vehicleData.imageFile);
-    }
+        if (!response.ok) {
+            let errorMessage = 'Unknown error';
+            try {
+                const clonedResponse = response.clone();
+                const errorData = await clonedResponse.json();
+                errorMessage = errorData.message || JSON.stringify(errorData);
+            } catch {
+                errorMessage = await response.text();
+            }
 
-    const response = await axios.post(API_URL, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-    return response.data;
-};
+            console.error('Response status:', response.status);
+            console.error('Response headers:', Array.from(response.headers.entries()));
+            console.error('Backend error message:', errorMessage);
 
-export const updateVehicle = async (id: string, vehicleData: VehicleFormData): Promise<Vehicle> => {
-    const formData = new FormData();
-    formData.append('brand', vehicleData.brand);
-    formData.append('model', vehicleData.model);
-    formData.append('plate', vehicleData.plate);
-    formData.append('seats', vehicleData.seats.toString());
-    formData.append('colorId', vehicleData.colorId.toString());
-    formData.append('driverId', vehicleData.driverId);
-    if (vehicleData.imageFile) {
-        formData.append('imageFile', vehicleData.imageFile);
-    }
+            throw new Error(`Failed to create vehicle: ${errorMessage}`);
+        }
+    },
 
-    const response = await axios.put(`${API_URL}/${id}`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-    return response.data;
-};
+    update: async (id: string, data: Partial<Vehicle>) => {
+        const res = await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to update vehicle');
+        return res.json();
+    },
 
-export const deleteVehicle = async (id: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${id}`);
+    delete: async (id: string) => {
+        const res = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to delete vehicle');
+    },
 };

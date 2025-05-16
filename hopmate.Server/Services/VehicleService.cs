@@ -1,5 +1,5 @@
-﻿// VehicleService.cs
-using hopmate.Server.Data;
+﻿using hopmate.Server.Data;
+using hopmate.Server.DTO;
 using hopmate.Server.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,12 +7,12 @@ namespace hopmate.Server.Services
 {
 	public interface IVehicleService
 	{
-		Task<List<Vehicle>> GetAllVehiclesAsync();
-		Task<Vehicle?> GetVehicleByIdAsync(Guid id);
-		Task<Vehicle> CreateVehicleAsync(Vehicle vehicle);
-		Task<Vehicle?> UpdateVehicleAsync(Guid id, Vehicle vehicle);
+		Task<IEnumerable<VehicleDTO>> GetAllVehiclesAsync();
+		Task<VehicleDTO?> GetVehicleByIdAsync(Guid id);
+		Task<IEnumerable<VehicleDTO>> GetVehiclesByDriverIdAsync(Guid driverId);
+		Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO vehicleDto);
+		Task<VehicleDTO?> UpdateVehicleAsync(Guid id, UpdateVehicleDTO vehicleDto);
 		Task<bool> DeleteVehicleAsync(Guid id);
-		Task<List<Vehicle>> GetVehiclesByDriverAsync(Guid driverId);
 	}
 
 	public class VehicleService : IVehicleService
@@ -24,55 +24,110 @@ namespace hopmate.Server.Services
 			_context = context;
 		}
 
-		public async Task<List<Vehicle>> GetAllVehiclesAsync()
+		public async Task<IEnumerable<VehicleDTO>> GetAllVehiclesAsync()
 		{
 			return await _context.Vehicles
 				.Include(v => v.Color)
 				.Include(v => v.Driver)
+				.Select(v => MapToDTO(v))
 				.ToListAsync();
 		}
 
-		public async Task<Vehicle?> GetVehicleByIdAsync(Guid id)
+		public async Task<VehicleDTO?> GetVehicleByIdAsync(Guid id)
 		{
-			return await _context.Vehicles
+			var vehicle = await _context.Vehicles
 				.Include(v => v.Color)
 				.Include(v => v.Driver)
 				.FirstOrDefaultAsync(v => v.Id == id);
+
+			return vehicle == null ? null : MapToDTO(vehicle);
 		}
 
-		public async Task<List<Vehicle>> GetVehiclesByDriverAsync(Guid driverId)
+		public async Task<IEnumerable<VehicleDTO>> GetVehiclesByDriverIdAsync(Guid driverId)
 		{
 			return await _context.Vehicles
 				.Include(v => v.Color)
+				.Include(v => v.Driver)
 				.Where(v => v.IdDriver == driverId)
+				.Select(v => MapToDTO(v))
 				.ToListAsync();
 		}
 
-		public async Task<Vehicle> CreateVehicleAsync(Vehicle vehicle)
+		public async Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO vehicleDto)
 		{
+			var vehicle = new Vehicle
+			{
+				Id = Guid.NewGuid(),
+				Brand = vehicleDto.Brand,
+				Model = vehicleDto.Model,
+				Plate = vehicleDto.Plate,
+				Seats = vehicleDto.Seats,
+				ImageFilePath = vehicleDto.ImageFilePath ?? string.Empty,
+				IdDriver = vehicleDto.IdDriver,
+				IdColor = vehicleDto.IdColor,
+				Color = await _context.Colors.FindAsync(vehicleDto.IdColor)
+					?? throw new InvalidOperationException("Color not found"),
+				Driver = await _context.Drivers.FindAsync(vehicleDto.IdDriver)
+					?? throw new InvalidOperationException("Driver not found")
+			};
+
 			_context.Vehicles.Add(vehicle);
 			await _context.SaveChangesAsync();
-			return vehicle;
+
+			return MapToDTO(vehicle);
 		}
 
-		public async Task<Vehicle?> UpdateVehicleAsync(Guid id, Vehicle vehicle)
+		public async Task<VehicleDTO?> UpdateVehicleAsync(Guid id, UpdateVehicleDTO vehicleDto)
 		{
-			var existingVehicle = await _context.Vehicles.FindAsync(id);
-			if (existingVehicle == null) return null;
+			var vehicle = await _context.Vehicles
+				.Include(v => v.Color)
+				.Include(v => v.Driver)
+				.FirstOrDefaultAsync(v => v.Id == id);
 
-			_context.Entry(existingVehicle).CurrentValues.SetValues(vehicle);
+			if (vehicle == null)
+				return null;
+
+			vehicle.Brand = vehicleDto.Brand;
+			vehicle.Model = vehicleDto.Model;
+			vehicle.Plate = vehicleDto.Plate;
+			vehicle.Seats = vehicleDto.Seats;
+			vehicle.ImageFilePath = vehicleDto.ImageFilePath ?? vehicle.ImageFilePath;
+			vehicle.IdColor = vehicleDto.IdColor;
+
+			// Update related entities if needed
+			vehicle.Color = await _context.Colors.FindAsync(vehicleDto.IdColor)
+				?? throw new InvalidOperationException("Color not found");
+
 			await _context.SaveChangesAsync();
-			return existingVehicle;
+			return MapToDTO(vehicle);
 		}
 
 		public async Task<bool> DeleteVehicleAsync(Guid id)
 		{
 			var vehicle = await _context.Vehicles.FindAsync(id);
-			if (vehicle == null) return false;
+			if (vehicle == null)
+				return false;
 
 			_context.Vehicles.Remove(vehicle);
 			await _context.SaveChangesAsync();
 			return true;
+		}
+
+		private static VehicleDTO MapToDTO(Vehicle vehicle)
+		{
+			return new VehicleDTO
+			{
+				Id = vehicle.Id,
+				Brand = vehicle.Brand,
+				Model = vehicle.Model,
+				Plate = vehicle.Plate,
+				Seats = vehicle.Seats,
+				ImageFilePath = vehicle.ImageFilePath,
+				IdDriver = vehicle.IdDriver,
+				IdColor = vehicle.IdColor,
+				ColorName = vehicle.Color?.Name,
+				DriverName = vehicle.Driver?.User?.FullName
+			};
 		}
 	}
 }

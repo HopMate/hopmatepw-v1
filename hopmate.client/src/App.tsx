@@ -18,9 +18,7 @@ import { Splash } from '@/pages/auth/Splash';
 import { Login } from '@/pages/auth/Login';
 import { SignUp } from '@/pages/auth/SignUp';
 import { Home } from '@/pages/Home';
-import { VehicleDetailsPage } from './pages/vehicles/VehicleDetailsPage';
-import { VehicleFormPage } from './pages/vehicles/VehicleFormPage';
-import { VehicleListPage } from './pages/vehicles/VehicleListPage';
+import { Vehicles } from './pages/vehicles/Vehicles';
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -53,34 +51,7 @@ const AppRoutes = () => {
                 path="/vehicles"
                 element={
                     <ProtectedRoute>
-                        <VehicleListPage />
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/vehicles/new"
-                element={
-                    <ProtectedRoute>
-                        <VehicleFormPage />
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/vehicles/:id"
-                element={
-                    <ProtectedRoute>
-                        <VehicleDetailsPage />
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/vehicles/:id/edit"
-                element={
-                    <ProtectedRoute>
-                        <VehicleFormPage />
+                        <Vehicles />
                     </ProtectedRoute>
                 }
             />
