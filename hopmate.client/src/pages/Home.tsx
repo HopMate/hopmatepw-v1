@@ -4,12 +4,27 @@
  */
 
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useUser } from '@/hooks/useUser';
-import { useFetchUser } from '@/hooks/useFetchUser';
+import { useCurrentUser } from '@/hooks/useCurrentUser'; // Updated import
+import ColorSelector from '@/components/ui/ColorSelector';
 
 export const Home = () => {
-    const { user } = useUser();
-    useFetchUser(); // This will fetch user data if not already loaded
+    const { user, loading, error } = useCurrentUser(); // Simplified user fetching
+
+    if (loading) {
+        return (
+            <AppLayout>
+                <div>Loading user data...</div>
+            </AppLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <AppLayout>
+                <div className="text-red-500">Error: {error}</div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout>
@@ -22,4 +37,4 @@ export const Home = () => {
             </div>
         </AppLayout>
     );
-};
+}

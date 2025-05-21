@@ -18,7 +18,7 @@ import { Splash } from '@/pages/auth/Splash';
 import { Login } from '@/pages/auth/Login';
 import { SignUp } from '@/pages/auth/SignUp';
 import { Home } from '@/pages/Home';
-import { Vehicles } from './pages/vehicles/Vehicles';
+import VehicleManagement from '@/pages/vehicles/VehicleManagment';
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -51,7 +51,7 @@ const AppRoutes = () => {
                 path="/vehicles"
                 element={
                     <ProtectedRoute>
-                        <Vehicles />
+                        <VehicleManagement />
                     </ProtectedRoute>
                 }
             />

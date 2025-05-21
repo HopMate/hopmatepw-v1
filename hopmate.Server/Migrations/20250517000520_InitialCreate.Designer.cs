@@ -12,7 +12,7 @@ using hopmate.Server.Data;
 namespace hopmate.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250515174547_InitialCreate")]
+    [Migration("20250517000520_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

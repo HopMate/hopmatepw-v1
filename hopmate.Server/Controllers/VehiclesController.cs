@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace hopmate.Server.Controllers
 {
-	[Route("api/[controller]")]
 	[ApiController]
+	[Route("api/[controller]")]
 	public class VehiclesController : ControllerBase
 	{
 		private readonly IVehicleService _vehicleService;
@@ -15,84 +15,41 @@ namespace hopmate.Server.Controllers
 			_vehicleService = vehicleService;
 		}
 
-		// GET: api/Vehicles
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<VehicleDTO>>> GetVehicles()
+		public async Task<IActionResult> GetAll()
 		{
 			var vehicles = await _vehicleService.GetAllVehiclesAsync();
 			return Ok(vehicles);
 		}
 
-		// GET: api/Vehicles/5
 		[HttpGet("{id}")]
-		public async Task<ActionResult<VehicleDTO>> GetVehicle(Guid id)
+		public async Task<IActionResult> GetById(Guid id)
 		{
 			var vehicle = await _vehicleService.GetVehicleByIdAsync(id);
-
-			if (vehicle == null)
-			{
-				return NotFound();
-			}
-
+			if (vehicle == null) return NotFound();
 			return Ok(vehicle);
 		}
 
-		// GET: api/Vehicles/driver/5
-		[HttpGet("driver/{driverId}")]
-		public async Task<ActionResult<IEnumerable<VehicleDTO>>> GetVehiclesByDriver(Guid driverId)
-		{
-			var vehicles = await _vehicleService.GetVehiclesByDriverIdAsync(driverId);
-			return Ok(vehicles);
-		}
-
-		// POST: api/Vehicles
 		[HttpPost]
-		public async Task<ActionResult<VehicleDTO>> CreateVehicle(CreateVehicleDTO vehicleDto)
+		public async Task<IActionResult> Create([FromBody] CreateVehicleDTO dto)
 		{
-			try
-			{
-				var createdVehicle = await _vehicleService.CreateVehicleAsync(vehicleDto);
-				return CreatedAtAction(nameof(GetVehicle), new { id = createdVehicle.Id }, createdVehicle);
-			}
-			catch (InvalidOperationException ex)
-			{
-				return BadRequest(ex.Message);
-			}
+			var created = await _vehicleService.CreateVehicleAsync(dto);
+			return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
 		}
 
-		// PUT: api/Vehicles/5
 		[HttpPut("{id}")]
-		public async Task<IActionResult> UpdateVehicle(Guid id, UpdateVehicleDTO vehicleDto)
+		public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVehicleDTO dto)
 		{
-			try
-			{
-				var updatedVehicle = await _vehicleService.UpdateVehicleAsync(id, vehicleDto);
-
-				if (updatedVehicle == null)
-				{
-					return NotFound();
-				}
-
-				return Ok(updatedVehicle);
-			}
-			catch (InvalidOperationException ex)
-			{
-				return BadRequest(ex.Message);
-			}
+			var updated = await _vehicleService.UpdateVehicleAsync(id, dto);
+			if (updated == null) return NotFound();
+			return Ok(updated);
 		}
 
-		// DELETE: api/Vehicles/5
 		[HttpDelete("{id}")]
-		public async Task<IActionResult> DeleteVehicle(Guid id)
+		public async Task<IActionResult> Delete(Guid id)
 		{
-			var result = await _vehicleService.DeleteVehicleAsync(id);
-
-			if (!result)
-			{
-				return NotFound();
-			}
-
-			return NoContent();
+			var deleted = await _vehicleService.DeleteVehicleAsync(id);
+			return deleted ? NoContent() : NotFound();
 		}
 	}
 }

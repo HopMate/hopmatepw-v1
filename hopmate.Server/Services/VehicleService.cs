@@ -9,7 +9,6 @@ namespace hopmate.Server.Services
 	{
 		Task<IEnumerable<VehicleDTO>> GetAllVehiclesAsync();
 		Task<VehicleDTO?> GetVehicleByIdAsync(Guid id);
-		Task<IEnumerable<VehicleDTO>> GetVehiclesByDriverIdAsync(Guid driverId);
 		Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO vehicleDto);
 		Task<VehicleDTO?> UpdateVehicleAsync(Guid id, UpdateVehicleDTO vehicleDto);
 		Task<bool> DeleteVehicleAsync(Guid id);
@@ -28,93 +27,28 @@ namespace hopmate.Server.Services
 		{
 			return await _context.Vehicles
 				.Include(v => v.Color)
-				.Include(v => v.Driver)
-				.Select(v => MapToDTO(v))
-				.ToListAsync();
+				.Select(v => new VehicleDTO
+				{
+					Id = v.Id,
+					Brand = v.Brand,
+					Model = v.Model,
+					Plate = v.Plate,
+					Seats = v.Seats,
+					ImageFilePath = v.ImageFilePath,
+					IdDriver = v.IdDriver,
+					IdColor = v.IdColor,
+					ColorName = v.Color!.Name
+				}).ToListAsync();
 		}
 
 		public async Task<VehicleDTO?> GetVehicleByIdAsync(Guid id)
 		{
 			var vehicle = await _context.Vehicles
 				.Include(v => v.Color)
-				.Include(v => v.Driver)
 				.FirstOrDefaultAsync(v => v.Id == id);
 
-			return vehicle == null ? null : MapToDTO(vehicle);
-		}
+			if (vehicle == null) return null;
 
-		public async Task<IEnumerable<VehicleDTO>> GetVehiclesByDriverIdAsync(Guid driverId)
-		{
-			return await _context.Vehicles
-				.Include(v => v.Color)
-				.Include(v => v.Driver)
-				.Where(v => v.IdDriver == driverId)
-				.Select(v => MapToDTO(v))
-				.ToListAsync();
-		}
-
-		public async Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO vehicleDto)
-		{
-			var vehicle = new Vehicle
-			{
-				Id = Guid.NewGuid(),
-				Brand = vehicleDto.Brand,
-				Model = vehicleDto.Model,
-				Plate = vehicleDto.Plate,
-				Seats = vehicleDto.Seats,
-				ImageFilePath = vehicleDto.ImageFilePath ?? string.Empty,
-				IdDriver = vehicleDto.IdDriver,
-				IdColor = vehicleDto.IdColor,
-				Color = await _context.Colors.FindAsync(vehicleDto.IdColor)
-					?? throw new InvalidOperationException("Color not found"),
-				Driver = await _context.Drivers.FindAsync(vehicleDto.IdDriver)
-					?? throw new InvalidOperationException("Driver not found")
-			};
-
-			_context.Vehicles.Add(vehicle);
-			await _context.SaveChangesAsync();
-
-			return MapToDTO(vehicle);
-		}
-
-		public async Task<VehicleDTO?> UpdateVehicleAsync(Guid id, UpdateVehicleDTO vehicleDto)
-		{
-			var vehicle = await _context.Vehicles
-				.Include(v => v.Color)
-				.Include(v => v.Driver)
-				.FirstOrDefaultAsync(v => v.Id == id);
-
-			if (vehicle == null)
-				return null;
-
-			vehicle.Brand = vehicleDto.Brand;
-			vehicle.Model = vehicleDto.Model;
-			vehicle.Plate = vehicleDto.Plate;
-			vehicle.Seats = vehicleDto.Seats;
-			vehicle.ImageFilePath = vehicleDto.ImageFilePath ?? vehicle.ImageFilePath;
-			vehicle.IdColor = vehicleDto.IdColor;
-
-			// Update related entities if needed
-			vehicle.Color = await _context.Colors.FindAsync(vehicleDto.IdColor)
-				?? throw new InvalidOperationException("Color not found");
-
-			await _context.SaveChangesAsync();
-			return MapToDTO(vehicle);
-		}
-
-		public async Task<bool> DeleteVehicleAsync(Guid id)
-		{
-			var vehicle = await _context.Vehicles.FindAsync(id);
-			if (vehicle == null)
-				return false;
-
-			_context.Vehicles.Remove(vehicle);
-			await _context.SaveChangesAsync();
-			return true;
-		}
-
-		private static VehicleDTO MapToDTO(Vehicle vehicle)
-		{
 			return new VehicleDTO
 			{
 				Id = vehicle.Id,
@@ -125,9 +59,56 @@ namespace hopmate.Server.Services
 				ImageFilePath = vehicle.ImageFilePath,
 				IdDriver = vehicle.IdDriver,
 				IdColor = vehicle.IdColor,
-				ColorName = vehicle.Color?.Name,
-				DriverName = vehicle.Driver?.User?.FullName
+				ColorName = vehicle.Color!.Name
 			};
+		}
+
+		public async Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO dto)
+		{
+			var vehicle = new Vehicle
+			{
+				Id = Guid.NewGuid(),
+				Brand = dto.Brand,
+				Model = dto.Model,
+				Plate = dto.Plate,
+				Seats = dto.Seats,
+				ImageFilePath = dto.ImageFilePath,
+				IdDriver = dto.IdDriver,
+				IdColor = dto.IdColor
+			};
+
+			_context.Vehicles.Add(vehicle);
+			await _context.SaveChangesAsync();
+
+			return await GetVehicleByIdAsync(vehicle.Id) ?? throw new Exception("Vehicle not found after creation.");
+		}
+
+		public async Task<VehicleDTO?> UpdateVehicleAsync(Guid id, UpdateVehicleDTO dto)
+		{
+			var vehicle = await _context.Vehicles.FindAsync(id);
+			if (vehicle == null) return null;
+
+			vehicle.Brand = dto.Brand;
+			vehicle.Model = dto.Model;
+			vehicle.Plate = dto.Plate;
+			vehicle.Seats = dto.Seats;
+			vehicle.ImageFilePath = dto.ImageFilePath;
+			vehicle.IdDriver = dto.IdDriver;
+			vehicle.IdColor = dto.IdColor;
+
+			await _context.SaveChangesAsync();
+
+			return await GetVehicleByIdAsync(id);
+		}
+
+		public async Task<bool> DeleteVehicleAsync(Guid id)
+		{
+			var vehicle = await _context.Vehicles.FindAsync(id);
+			if (vehicle == null) return false;
+
+			_context.Vehicles.Remove(vehicle);
+			await _context.SaveChangesAsync();
+			return true;
 		}
 	}
 }

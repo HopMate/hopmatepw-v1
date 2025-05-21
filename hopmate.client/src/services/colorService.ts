@@ -1,71 +1,31 @@
-// services/colorService.ts
 import axios from 'axios';
 import type { Color } from '@/types/color';
 
-const API_URL = '/api/colors';
+const API_BASE_URL = 'https://localhost:7293';
+const API_URL = '/api/Colors';
 
-// Create an axios instance with authorization header
-const authAxios = axios.create();
+const authAxios = axios.create({ baseURL: API_BASE_URL });
 
-// Add an interceptor to include the auth token in all requests
 authAxios.interceptors.request.use(config => {
-    // Get token from localStorage
     const token = localStorage.getItem('auth_token');
-
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
-}, error => {
-    return Promise.reject(error);
 });
 
-export const colorService = {
-    getAllColors: async (): Promise<Color[]> => {
-        try {
-            const response = await axios.get<Color[]>(API_URL);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching colors:', error);
-            throw new Error(`Failed to fetch colors: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    },
-
-    getColorById: async (id: number): Promise<Color> => {
-        try {
-            const response = await axios.get<Color>(`${API_URL}/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching color with id ${id}:`, error);
-            throw new Error(`Failed to fetch color: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    },
-
-    createColor: async (color: Omit<Color, 'id'>): Promise<Color> => {
-        try {
-            const response = await axios.post<Color>(API_URL, color);
-            return response.data;
-        } catch (error) {
-            console.error('Error creating color:', error);
-            throw new Error(`Failed to create color: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    },
-
-    updateColor: async (id: number, color: Color): Promise<void> => {
-        try {
-            await axios.put(`${API_URL}/${id}`, color);
-        } catch (error) {
-            console.error(`Error updating color with id ${id}:`, error);
-            throw new Error(`Failed to update color: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    },
-
-    deleteColor: async (id: number): Promise<void> => {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-        } catch (error) {
-            console.error(`Error deleting color with id ${id}:`, error);
-            throw new Error(`Failed to delete color: ${error instanceof Error ? error.message : String(error)}`);
-        }
+async function handleRequest<T>(request: Promise<{ data: T }>): Promise<T> {
+    try {
+        const response = await request;
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        throw new Error(error instanceof Error ? error.message : String(error));
     }
+}
+
+export const colorService = {
+    getAllColors: () => handleRequest<Color[]>(authAxios.get(API_URL)),
+    getColorById: (id: number) => handleRequest<Color>(authAxios.get(`${API_URL}/${id}`)),
+    createColor: (color: Omit<Color, 'id'>) => handleRequest<Color>(authAxios.post(API_URL, color)),
+    updateColor: (id: number, color: Color) => handleRequest<void>(authAxios.put(`${API_URL}/${id}`, color)),
+    deleteColor: (id: number) => handleRequest<void>(authAxios.delete(`${API_URL}/${id}`)),
 };

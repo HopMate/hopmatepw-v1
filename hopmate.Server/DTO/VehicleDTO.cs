@@ -1,81 +1,42 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace hopmate.Server.DTO
+﻿namespace hopmate.Server.DTO
 {
 	public class VehicleDTO
 	{
 		public Guid Id { get; set; }
-
-		[Required]
-		public string Brand { get; set; } = null!;
-
-		[Required]
-		public string Model { get; set; } = null!;
-
-		[Required]
-		public string Plate { get; set; } = null!;
-
-		[Required]
-		[Range(1, int.MaxValue, ErrorMessage = "Seats must be greater than 0")]
+		public string Brand { get; set; } = string.Empty;
+		public string Model { get; set; } = string.Empty;
+		public string Plate { get; set; } = string.Empty;
 		public int Seats { get; set; }
+		public string ImageFilePath { get; set; } = string.Empty;
 
-		public string? ImageFilePath { get; set; }
-
-		[Required]
 		public Guid IdDriver { get; set; }
-
-		[Required]
 		public int IdColor { get; set; }
 
-		// Simplified color information for display
-		public string? ColorName { get; set; }
-
-		// Simplified driver information for display
-		public string? DriverName { get; set; }
+		public string ColorName { get; set; } = string.Empty;
 	}
 
 	public class CreateVehicleDTO
 	{
-		[Required]
-		public string Brand { get; set; } = null!;
-
-		[Required]
-		public string Model { get; set; } = null!;
-
-		[Required]
-		public string Plate { get; set; } = null!;
-
-		[Required]
-		[Range(1, int.MaxValue, ErrorMessage = "Seats must be greater than 0")]
+		public string Brand { get; set; } = string.Empty;
+		public string Model { get; set; } = string.Empty;
+		public string Plate { get; set; } = string.Empty;
 		public int Seats { get; set; }
+		public string ImageFilePath { get; set; } = string.Empty;
 
-		public string? ImageFilePath { get; set; }
-
-		[Required]
 		public Guid IdDriver { get; set; }
-
-		[Required]
 		public int IdColor { get; set; }
 	}
 
 	public class UpdateVehicleDTO
 	{
-		[Required]
-		public string Brand { get; set; } = null!;
-
-		[Required]
-		public string Model { get; set; } = null!;
-
-		[Required]
-		public string Plate { get; set; } = null!;
-
-		[Required]
-		[Range(1, int.MaxValue, ErrorMessage = "Seats must be greater than 0")]
+		public Guid Id { get; set; }
+		public string Brand { get; set; } = string.Empty;
+		public string Model { get; set; } = string.Empty;
+		public string Plate { get; set; } = string.Empty;
 		public int Seats { get; set; }
+		public string ImageFilePath { get; set; } = string.Empty;
 
-		public string? ImageFilePath { get; set; }
-
-		[Required]
+		public Guid IdDriver { get; set; }
 		public int IdColor { get; set; }
 	}
 }

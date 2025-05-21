@@ -86,7 +86,7 @@ namespace hopmate.Server.Data
 
 				// Relationship with Driver
 				entity.HasOne(x => x.Driver)
-					  .WithMany() // Update this if you uncomment Vehicles collection in Driver
+					  .WithMany(d => d.Vehicles)
 					  .HasForeignKey(x => x.IdDriver)
 					  .OnDelete(DeleteBehavior.Restrict);
 

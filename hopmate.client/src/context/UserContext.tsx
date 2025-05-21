@@ -4,11 +4,7 @@
  */
 
 import { createContext } from 'react';
-
-export interface User {
-    fullName: string;
-    email: string;
-}
+import { type User } from '@/types/user';
 
 export interface UserContextType {
     user: User | null;

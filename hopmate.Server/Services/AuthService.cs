@@ -81,7 +81,6 @@ namespace hopmate.Server.Services
 			}
 			catch (Exception ex)
 			{
-				// Se algo der errado, deletar o usuário criado
 				await _userManager.DeleteAsync(user);
 				return new AuthResponse { Success = false, Message = $"Failed to create passenger/driver records: {ex.Message}" };
 			}

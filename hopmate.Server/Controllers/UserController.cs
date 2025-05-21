@@ -27,6 +27,7 @@ namespace hopmate.Server.Controllers
 
 			return Ok(new
 			{
+				id = user.Id,                  // <-- Added this line to include user ID
 				fullName = user.FullName,
 				email = user.Email,
 				dateOfBirth = user.DateOfBirth.ToString("yyyy-MM-dd")

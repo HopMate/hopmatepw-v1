@@ -1,4 +1,5 @@
-﻿using hopmate.Server.Models;
+﻿// ColorsController.cs
+using hopmate.Server.DTO;
 using hopmate.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +19,7 @@ namespace hopmate.Server.Controllers
 		// GET: api/Colors
 		[HttpGet]
 		[ProducesResponseType(StatusCodes.Status200OK)]
-		public async Task<ActionResult<IEnumerable<Color>>> GetColors()
+		public async Task<ActionResult<IEnumerable<ColorDto>>> GetColors()
 		{
 			var colors = await _colorService.GetAllColorsAsync();
 			return Ok(colors);
@@ -28,7 +29,7 @@ namespace hopmate.Server.Controllers
 		[HttpGet("{id}")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult<Color>> GetColor(int id)
+		public async Task<ActionResult<ColorDto>> GetColor(int id)
 		{
 			var color = await _colorService.GetColorByIdAsync(id);
 
@@ -46,26 +47,26 @@ namespace hopmate.Server.Controllers
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		public async Task<IActionResult> PutColor(int id, Color color)
+		public async Task<IActionResult> PutColor(int id, UpdateColorDto colorDto)
 		{
-			if (id != color.Id)
+			if (id != colorDto.Id)
 			{
 				return BadRequest();
 			}
 
 			// Check if color with same name already exists (but different id)
-			if (await _colorService.ColorNameExistsAsync(color.Name) &&
-				(await _colorService.GetColorByIdAsync(id)).Name != color.Name)
+			if (await _colorService.ColorNameExistsAsync(colorDto.Name) &&
+				(await _colorService.GetColorByIdAsync(id))?.Name != colorDto.Name)
 			{
 				return Conflict("A color with this name already exists.");
 			}
 
-			if (!await _colorService.ColorExistsAsync(id))
+			var updatedColor = await _colorService.UpdateColorAsync(colorDto);
+			if (updatedColor == null)
 			{
 				return NotFound();
 			}
 
-			await _colorService.UpdateColorAsync(color);
 			return NoContent();
 		}
 
@@ -73,17 +74,17 @@ namespace hopmate.Server.Controllers
 		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		public async Task<ActionResult<Color>> PostColor(Color color)
+		public async Task<ActionResult<ColorDto>> PostColor(CreateColorDto colorDto)
 		{
 			// Check if color with same name already exists
-			if (await _colorService.ColorNameExistsAsync(color.Name))
+			if (await _colorService.ColorNameExistsAsync(colorDto.Name))
 			{
 				return Conflict("A color with this name already exists.");
 			}
 
-			await _colorService.CreateColorAsync(color);
+			var createdColor = await _colorService.CreateColorAsync(colorDto);
 
-			return CreatedAtAction(nameof(GetColor), new { id = color.Id }, color);
+			return CreatedAtAction(nameof(GetColor), new { id = createdColor.Id }, createdColor);
 		}
 
 		// DELETE: api/Colors/5

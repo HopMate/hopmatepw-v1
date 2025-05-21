@@ -16,9 +16,9 @@ namespace hopmate.Server.Models
 		public Guid IdDriver { get; set; }
 		public int IdColor { get; set; }
 
-		public virtual required Color Color { get; set; }
-		//[JsonIgnore]
-		public virtual required Driver Driver { get; set; }
+		public virtual Color? Color { get; set; }
+
+		public virtual Driver? Driver { get; set; }
 		//public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
 	}
 }
